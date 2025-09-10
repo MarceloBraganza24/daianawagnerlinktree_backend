@@ -16,7 +16,24 @@ dotenv.config({ path: ".env.production" });
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-app.use(cors());
+const allowedOrigins = [
+  "https://daianawagnerlinktree.web.app", // URL de tu frontend en Firebase
+  "http://localhost:5173" // Para desarrollo local con Vite
+];
+app.use(cors({
+  origin: function(origin, callback) {
+    // permitir requests sin origin (como curl o Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `El CORS para este origen (${origin}) no está permitido`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true, // si usás cookies o auth
+}));
+//app.use(cors());
+
 app.use(express.json());
 
 // Servir imágenes de /uploads

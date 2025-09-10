@@ -8,6 +8,7 @@ import {
   deleteLink,
 } from "../controllers/links.controller.js";
 import path from "path";
+import Link from "../models/link.model.js";
 
 // Configuración Multer
 const storage = multer.diskStorage({
@@ -27,7 +28,22 @@ const router = express.Router();
 // CRUD Links
 router.get("/", verifyToken, getLinks);
 router.post("/", verifyToken, upload.single("img_link"), createLink);
+router.put("/reorder", async (req, res) => {
+  try {
+    const { orderedIds } = req.body; // array de IDs en nuevo orden
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        Link.findByIdAndUpdate(id, { order: index })
+      )
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 router.put("/:id", verifyToken, upload.single("img_link"), updateLink);
+
+
 router.delete("/:id", verifyToken, deleteLink);
 
 export default router;

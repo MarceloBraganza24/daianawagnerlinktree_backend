@@ -5,8 +5,16 @@ export const createLink = async (req, res) => {
   try {
     const { url_destino, descripcion_link } = req.body;
     const img_link = req.file ? `/uploads/${req.file.filename}` : null;
+    
+    const count = await Link.countDocuments();
 
-    const newLink = new Link({ url_destino, descripcion_link, img_link });
+    //const newLink = new Link({ url_destino, descripcion_link, img_link });
+    const newLink = new Link({
+      url_destino,
+      descripcion_link,
+      img_link,
+      order: count, // 👈 lo pone al final
+    });
     await newLink.save();
 
     res.status(201).json(newLink);
@@ -47,7 +55,7 @@ export const deleteLink = async (req, res) => {
 
 export const getLinks = async (req, res) => {
   try {
-    const links = await Link.find(); // devuelve todos los links
+    const links = await Link.find().sort({ order: 1 });
     res.json(links);
   } catch (err) {
     res.status(500).json({ error: err.message });
