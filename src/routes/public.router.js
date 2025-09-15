@@ -1,4 +1,3 @@
-// routes/public.js
 import express from "express";
 import Profile from "../models/profile.model.js";
 import Link from "../models/link.model.js";

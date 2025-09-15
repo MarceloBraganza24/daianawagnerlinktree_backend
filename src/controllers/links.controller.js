@@ -8,7 +8,6 @@ export const createLink = async (req, res) => {
     
     const count = await Link.countDocuments();
 
-    //const newLink = new Link({ url_destino, descripcion_link, img_link });
     const newLink = new Link({
       url_destino,
       descripcion_link,

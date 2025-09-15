@@ -1,4 +1,3 @@
-// routes/auth.js
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -6,7 +5,6 @@ import Admin from "../models/admin.model.js";
 
 const router = express.Router();
 
-// POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const admin = await Admin.findOne({ username });

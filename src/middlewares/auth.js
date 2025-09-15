@@ -1,4 +1,3 @@
-// middleware/auth.js
 import jwt from "jsonwebtoken";
 
 export function verifyToken(req, res, next) {
