@@ -1,4 +1,4 @@
-import express from "express";
+/* import express from "express";
 import multer from "multer";
 import { verifyToken } from "../middlewares/auth.js";
 import {
@@ -44,6 +44,51 @@ router.put("/reorder", async (req, res) => {
 router.put("/:id", verifyToken, upload.single("img_link"), updateLink);
 
 
+router.delete("/:id", verifyToken, deleteLink);
+
+export default router;
+ */
+
+import express from "express";
+import multer from "multer";
+import { verifyToken } from "../middlewares/auth.js";
+import {
+  getLinks,
+  createLink,
+  updateLink,
+  deleteLink,
+} from "../controllers/links.controller.js";
+import Link from "../models/link.model.js";
+
+const router = express.Router();
+
+// ⚡ Multer en memoria
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+});
+
+// CRUD Links
+router.get("/", verifyToken, getLinks);
+router.post("/", verifyToken, upload.single("img_link"), createLink);
+router.put("/reorder", verifyToken, async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+    if (!Array.isArray(orderedIds))
+      return res.status(400).json({ error: "orderedIds debe ser un array" });
+
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        Link.findByIdAndUpdate(id, { order: index })
+      )
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al reordenar links" });
+  }
+});
+router.put("/:id", verifyToken, upload.single("img_link"), updateLink);
 router.delete("/:id", verifyToken, deleteLink);
 
 export default router;
