@@ -74,7 +74,7 @@ import express from "express";
 import multer from "multer";
 import SiteConfig from "../models/siteConfig.model.js";
 import { hexToRgba } from "../utils/colors.js";
-import { uploadToGCS } from "../utils/uploadToGCS.js";
+import { uploadToGCS,deleteFromGCS } from "../utils/uploadToGCS.js";
 
 const router = express.Router();
 
@@ -131,6 +131,11 @@ router.post(
         config.homeBackgroundValue = homeBackgroundColor;
       } else if (req.files["homeBackgroundImage"]?.[0]) {
         try {
+          // Borrar imagen anterior si existe
+          if (config.homeBackgroundValue?.startsWith("https://storage.googleapis.com/")) {
+            await deleteFromGCS(config.homeBackgroundValue);
+          }
+
           const gcsUrl = await uploadToGCS(req.files["homeBackgroundImage"][0]);
           config.homeBackgroundValue = gcsUrl;
         } catch (err) {
@@ -143,9 +148,18 @@ router.post(
       config.linkTreeBackgroundType = linkTreeBackgroundType;
       if (linkTreeBackgroundType === "color") {
         config.linkTreeBackgroundValue = linkTreeBackgroundColor;
-        config.linkTreeBackgroundOpacity = parseFloat(linkTreeBackgroundOpacity) || 0.7;
+        //config.linkTreeBackgroundOpacity = parseFloat(linkTreeBackgroundOpacity) || 0.7;
+        config.linkTreeBackgroundOpacity =
+          linkTreeBackgroundOpacity !== undefined
+            ? parseFloat(linkTreeBackgroundOpacity)
+            : 0.7;
       } else if (req.files["linkTreeBackgroundImage"]?.[0]) {
         try {
+          // Borrar imagen anterior si existe
+          if (config.linkTreeBackgroundValue?.startsWith("https://storage.googleapis.com/")) {
+            await deleteFromGCS(config.linkTreeBackgroundValue);
+          }
+
           const gcsUrl = await uploadToGCS(req.files["linkTreeBackgroundImage"][0]);
           config.linkTreeBackgroundValue = gcsUrl;
         } catch (err) {

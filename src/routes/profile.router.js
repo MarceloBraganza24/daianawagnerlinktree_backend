@@ -53,8 +53,9 @@ export default router;
 import express from "express";
 import multer from "multer";
 import Profile from "../models/profile.model.js";
+import Link from "../models/link.model.js";
 import { verifyToken } from "../middlewares/auth.js";
-import { uploadToGCS } from "../utils/uploadToGCS.js";
+import { uploadToGCS,deleteFromGCS } from "../utils/uploadToGCS.js";
 
 const router = express.Router();
 
@@ -95,6 +96,7 @@ router.put("/", verifyToken, upload.single("avatar"), async (req, res) => {
 
     const nombre = req.body.nombreProfesional?.trim();
     const descripcion = req.body.descripcionProfesional?.trim();
+    const aboutProfesional = req.body.aboutProfesional?.trim();
 
     if (nombre && nombre.length > maxNombreLength)
       return res
@@ -109,16 +111,61 @@ router.put("/", verifyToken, upload.single("avatar"), async (req, res) => {
     // Actualización de campos de texto
     if (nombre) profile.nombreProfesional = nombre;
     if (descripcion) profile.descripcionProfesional = descripcion;
+    if (aboutProfesional) profile.aboutProfesional = aboutProfesional;
 
     // Intentar subir avatar a GCS (no bloquea la actualización de texto)
     if (req.file) {
       try {
+
         const gcsUrl = await uploadToGCS(req.file);
+
+        // si había una imagen previa, la borramos
+        if (profile.avatar && profile.avatar.startsWith("https://storage.googleapis.com/")) {
+          await deleteFromGCS(profile.avatar);
+        }
+
         profile.avatar = gcsUrl;
+
       } catch (gcsError) {
         console.error("Error subiendo imagen a GCS:", gcsError);
         // Solo avisamos, no interrumpimos la actualización de texto
         res.locals.gcsError = "Error subiendo la imagen al servidor";
+      }
+    }
+
+    // Crear o actualizar link "Sobre mí"
+    if (aboutProfesional) {
+      let aboutLink;
+      if (profile.aboutLinkId) {
+        // Si ya existe, actualizamos
+        aboutLink = await Link.findById(profile.aboutLinkId);
+        if (aboutLink) {
+          aboutLink.img_link = profile.avatar;
+          aboutLink.url_destino = "https://daianawagnerlinktree.web.app/aboutProfesional";
+          //boutLink.url_destino = "http://localhost:5173/aboutProfesional";
+          aboutLink.descripcion_link = "Sobre mí";
+          await aboutLink.save();
+        } else {
+          // Si por alguna razón el link fue borrado, creamos uno nuevo
+          aboutLink = new Link({
+            img_link: profile.avatar,
+            url_destino: "https://daianawagnerlinktree.web.app/aboutProfesional",
+            //url_destino: "http://localhost:5173/aboutProfesional",
+            descripcion_link: "Sobre mí",
+          });
+          await aboutLink.save();
+          profile.aboutLinkId = aboutLink._id;
+        }
+      } else {
+        // Si no existe link previo, lo creamos
+        aboutLink = new Link({
+          img_link: profile.avatar,
+          url_destino: "https://daianawagnerlinktree.web.app/aboutProfesional",
+          //url_destino: "http://localhost:5173/aboutProfesional",
+          descripcion_link: "Sobre mí",
+        });
+        await aboutLink.save();
+        profile.aboutLinkId = aboutLink._id;
       }
     }
 
