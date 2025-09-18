@@ -4,7 +4,10 @@ import axios from "axios";
 
 dotenv.config({ path: ".env.production" });
 
-const storage = new Storage({ projectId: process.env.GCS_PROJECT_ID });
+const storage = new Storage({
+  projectId: process.env.GCS_PROJECT_ID,
+  keyFilename: "/var/secrets/secrets/gcs-key.json"
+});
 const bucket = storage.bucket(process.env.GCS_BUCKET);
 
 export const uploadToGCS = async (file) => {
